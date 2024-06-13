@@ -1,3 +1,16 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  color: white;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  @apply bg-baseBlack;
+}
