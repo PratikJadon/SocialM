@@ -11,14 +11,17 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Chat from "./pages/Chat";
 import ChatBox from "./components/ChatBox";
+import ProtectedRoute from "./shared/ProtectedRoute";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <>
-      <Route path="/" element={<AppLayout />}>
-        <Route index element={<Home />} />
-        <Route path="/chat" element={<Chat />}>
-          <Route path=":chatId" element={<ChatBox />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<AppLayout />}>
+          <Route index element={<Home />} />
+          <Route path="/chat" element={<Chat />}>
+            <Route path=":chatId" element={<ChatBox />} />
+          </Route>
         </Route>
       </Route>
       <Route path="/login" element={<Login />}></Route>

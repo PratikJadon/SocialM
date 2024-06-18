@@ -67,19 +67,27 @@ exports.login = async (req, res, next) => {
     const isValidPassword = await user.verifyPassowrd(password)
     if (!isValidPassword) return next(customError(StatusCodes.UNAUTHORIZED, "Please provide correct email or password"))
 
-    const token = genToken({ name: user.name, email: user.email, user: user.username })
-    res.cookie('token', token, {
-        httpOnly: true,
-        maxAge: process.env.COOKIE_EXPIRE || "3600000", // 1 hour (specified in milliseconds)
-    });
+    const token = genToken({ name: user.name, email: user.email, username: user.username, id: user._id })
     res.status(StatusCodes.OK).json({
         message: "Login successfull",
         user: {
             name: user.name,
             email: user.email,
             username: user.username,
-            user_id: user._id
+            user_id: user._id,
+            token
         }
     })
 
+}
+
+exports.searchUser = async (req, res, next) => {
+    const { username } = req.body;
+
+    if (!username) return next(customError(StatusCodes.BAD_REQUEST, "Please give user to search"))
+
+    const regex = new RegExp(username, 'i'); // 'i' makes it case-insensitive
+    const foundUser = await User.find({ username: { $regex: regex, $ne: req.user.username } }).select("name avatar _id");
+
+    res.status(StatusCodes.OK).json({ message: "Success", foundUser })
 }

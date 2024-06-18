@@ -24,6 +24,7 @@ app.use("/api/v1/chat", chatRouter)
 app.use(errorHandler);
 
 
+// app.options("/*", cors())
 
 const start = async () => {
     await connectDB(process.env.MONGO_URL);
