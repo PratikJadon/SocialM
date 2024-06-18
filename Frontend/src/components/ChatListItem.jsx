@@ -4,10 +4,10 @@ import Badge from "../shared/Badge";
 
 const ChatListItem = ({ data }) => {
   return (
-    <Link to={`${data.id}`} rel>
+    <Link to={`${data._id}`}>
       <div className="w-full flex gap-5 items-center hover:bg-lightBlack p-2 rounded-2xl cursor-pointer">
         <img
-          src={data.avatar}
+          src={data.profileImage}
           className="w-12 h-12 rounded-full object-cover"
         />
         <div>

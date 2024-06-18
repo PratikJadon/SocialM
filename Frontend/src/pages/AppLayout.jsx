@@ -1,6 +1,7 @@
 import React from "react";
 import { CiChat1 as InboxIcon } from "react-icons/ci";
 import { GoHome as HomeIcon } from "react-icons/go";
+import { IoIosLogIn as LoginIcon } from "react-icons/io";
 import {
   IoPersonOutline as PersonIcon,
   IoSettingsOutline as SettingIcon,
@@ -19,6 +20,9 @@ const AppLayout = () => {
         </Link>
         <Link to={"/chat"} className="hover:bg-hoverBlue rounded-full p-2">
           <InboxIcon size={22} />
+        </Link>
+        <Link to={"/login"} className="hover:bg-hoverBlue rounded-full p-2">
+          <LoginIcon size={22} />
         </Link>
         <SettingIcon
           size={35}

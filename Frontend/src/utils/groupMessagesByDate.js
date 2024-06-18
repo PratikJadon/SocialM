@@ -1,10 +1,11 @@
 import { format, isToday, isYesterday } from 'date-fns';
 
 export const groupMessagesByDate = (messages) => {
+    console.log(messages);
     // Sort messages by timestamp in descending order
-    messages.sort((b, a) => new Date(b.timestamp) - new Date(a.timestamp));
+    messages.sort((b, a) => new Date(b.createdAt) - new Date(a.createdAt));
     return messages.reduce((groups, message) => {
-        const date = new Date(message.timestamp);
+        const date = new Date(message.createdAt);
         let dateKey;
 
         if (isToday(date)) {

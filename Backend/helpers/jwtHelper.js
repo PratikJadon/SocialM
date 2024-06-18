@@ -11,7 +11,8 @@ exports.genToken = (payload) => {
     return token;
 }
 
-exports.validateToken = (toke) => {
+exports.validateToken = (token) => {
     const secretKey = process.env.JWT_KEY
     const decoded = jwt.decode(token, secretKey)
+    return decoded;
 }
