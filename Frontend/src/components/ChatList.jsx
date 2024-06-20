@@ -3,35 +3,14 @@ import SearchBar from "../shared/SearchBar";
 import { getAllChats } from "../utils/apiHandler";
 import ChatListItem from "./ChatListItem";
 
-// const tempChats = [
-//   {
-//     id: "0129i0192",
-//     avatar: testAvatar,
-//     name: "Check 1",
-//     lastMessage: "Good Morning",
-//     unreadMessage: true,
-//     undreadMessageCount: 1,
-//   },
-//   {
-//     id: "012912342",
-//     avatar: testAvatar,
-//     name: "Check 2",
-//     lastMessage: "Hello, How are you everyone, I am fine.",
-//     unreadMessage: false,
-//     undreadMessageCount: 0,
-//   },
-// ];
-
 const ChatList = () => {
   const [chatList, setChatList] = useState([]);
 
   useEffect(() => {
-    const getData = async () => {
+    (async () => {
       const data = await getAllChats();
-      console.log(data);
       setChatList(data);
-    };
-    getData();
+    })();
   }, []);
 
   return (

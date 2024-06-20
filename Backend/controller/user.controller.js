@@ -1,5 +1,5 @@
 const { StatusCodes } = require("http-status-codes")
-const { genToken } = require("../helpers/jwtHelper.js")
+const { genToken, validateToken } = require("../helpers/jwtHelper.js")
 const User = require("../models/user.model.js")
 const { customError } = require("../utils/customError.js")
 const { res400, res500 } = require("../utils/resCodes.js")
@@ -90,4 +90,21 @@ exports.searchUser = async (req, res, next) => {
     const foundUser = await User.find({ username: { $regex: regex, $ne: req.user.username } }).select("name avatar _id");
 
     res.status(StatusCodes.OK).json({ message: "Success", foundUser })
+}
+
+exports.reAuth = async (req, res, next) => {
+    const { token } = req.body
+    if (!token) next(customError(StatusCodes.UNAUTHORIZED, "Please login to access."))
+
+    const user = validateToken(token)
+    if (!user) next(customError(StatusCodes.UNAUTHORIZED, "Please login to access."))
+    return res.status(StatusCodes.OK).json({
+        message: "User is authenticated", user: {
+            name: user.name,
+            email: user.email,
+            username: user.username,
+            user_id: user.id,
+            token
+        }
+    })
 }

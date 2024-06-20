@@ -10,11 +10,17 @@ exports.getChat = async (req, res, next) => {
     const { chatId } = req.body;
     if (!chatId) return next(customError(StatusCodes.BAD_REQUEST, "INTERNAL SERVER ERROR!!"));
 
-    const chat = await Chat.findOne({ _id: chatId, groupChat: false }).select("members").lean()
+    const chat = await Chat.findOne({ _id: chatId }).select("members groupChat").lean()
     const chatMember = chat.members.filter(member => member != req.user.id);
-    const chatMemberDetail = await User.findById(chatMember).select("name avatar").lean()
-
-    return res.status(StatusCodes.OK).json({ message: "Successfull", chatMemberDetail })
+    let chatDetail;
+    if (!chat.groupChat) {
+        let chatMemberDetail = await User.findById(chatMember).select("name avatar").lean()
+        chatDetail = { avatar: chatMemberDetail.avatar, name: chatMemberDetail.name, chat: chat }
+    }
+    else {
+        // Handle get Group Chat
+    }
+    return res.status(StatusCodes.OK).json({ message: "Successfull", chatDetail })
 }
 
 exports.createChat = async (req, res, next) => {
@@ -35,7 +41,6 @@ exports.getAllChats = async (req, res, next) => {
 
     const tranformedChat = chats.map(chat => {
         const otherMember = getOtherMemeber(chat.members, req.user.id)
-        console.log(otherMember);
         return {
             _id: chat._id,
             name: chat.groupChat ? chat.name : otherMember[0].name,

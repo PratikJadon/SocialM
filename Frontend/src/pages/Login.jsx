@@ -1,21 +1,23 @@
 import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { loginSuccess } from "../redux/Slices/authSlice";
 import { login } from "../utils/apiHandler";
+import useFetch from "../hooks/useFetch";
 
 const Login = () => {
   const navigateTo = useNavigate();
   const dispatch = useDispatch();
+  const fetchWrapper = useFetch();
+  const user = useSelector((state) => state.auth.user);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { data, response } = await login(userData);
+    const { data, response } = await fetchWrapper(login, userData);
     if (response.ok) {
       dispatch(loginSuccess(data.user));
+      sessionStorage.setItem("token", user.token);
       navigateTo("/");
-    } else {
-      navigateTo("/login");
     }
   };
 

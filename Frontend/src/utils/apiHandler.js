@@ -59,7 +59,6 @@ export const getChatById = async (chatId) => {
         if (!response.ok) {
             console.log(data.message);
         }
-        console.log(data);
         return data;
     } catch (error) {
         console.log(error.message);
@@ -102,6 +101,28 @@ export const sendMessage = async (chatMessage) => {
         });
 
         const data = await response.json();
+        return { data, response };
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
+export const reAuth = async (token) => {
+    const baseURL = import.meta.env.VITE_BASE_URL;
+    try {
+        const response = await fetch(`${baseURL}/user/reauth`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(token)
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            console.log(data.message);
+        }
         return { data, response };
     } catch (error) {
         console.log(error.message);

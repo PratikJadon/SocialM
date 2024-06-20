@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import testAvatar from "../assets/testAvatar.png";
 import { PiDotsThreeVertical as VerticalDotsIcon } from "react-icons/pi";
@@ -8,22 +8,37 @@ import { groupMessagesByDate } from "../utils/groupMessagesByDate";
 import SendBar from "../shared/SendBar";
 import { getChatById, getChatMessagae, sendMessage } from "../utils/apiHandler";
 import { useSelector } from "react-redux";
+import { NEW_MESSAGE } from "../utils/socketEvents";
 
 const ChatBox = ({ data }) => {
   const { chatId } = useParams();
   const [chatDetails, setChatDetails] = useState("");
   const [messages, setMessages] = useState([]);
+  const [newMessages, setNewMessages] = useState([]);
   const user = useSelector((state) => state.auth.user);
+  const socket = useSelector((state) => state.socket.socket);
 
   useEffect(() => {
-    const callApi = async () => {
+    if (socket) {
+      socket.on(NEW_MESSAGE, (message) => {
+        setNewMessages((prevMessage) => [...prevMessage, message]);
+      });
+    }
+
+    (async () => {
       const data = await getChatById({ chatId: chatId });
-      setChatDetails(data.chatMemberDetail);
+      setChatDetails(data.chatDetail);
+
       const messages = await getChatMessagae({ page: 1, chatId: chatId });
       setMessages(messages.messages);
+    })();
+
+    return () => {
+      if (socket) {
+        socket.off(NEW_MESSAGE);
+      }
     };
-    callApi();
-  }, []);
+  }, [socket]);
 
   const handleSubmit = async (e, value) => {
     e.preventDefault();
@@ -31,11 +46,27 @@ const ChatBox = ({ data }) => {
       content: value,
       chatId: chatId,
       sender_id: user.user_id,
+      sender_name: user.name,
+      members: chatDetails.chat.members,
+      createdAt: new Date(Date.now()),
     };
-    await sendMessage(chatMessage);
+    if (socket) {
+      setNewMessages((prev) => [...prev, chatMessage]);
+      socket.emit(NEW_MESSAGE, chatMessage);
+    }
+    // await sendMessage(chatMessage);
   };
 
-  const groupedMessages = groupMessagesByDate(messages);
+  const groupedOldMessages = useMemo(
+    () => groupMessagesByDate(messages),
+    [messages]
+  );
+
+  const groupedNewMessages = useMemo(
+    () => groupMessagesByDate(newMessages),
+    [newMessages]
+  );
+
   return (
     <div className="w-[73%] flex flex-col">
       {/* Chat Header */}
@@ -51,13 +82,28 @@ const ChatBox = ({ data }) => {
 
       {/* Message Area */}
       <div className="p-4 overflow-y-auto">
-        {Object.entries(groupedMessages).map(([date, messagesForDate]) => (
+        {Object.entries(groupedOldMessages).map(([date, messagesForDate]) => (
           <div key={date}>
             <div className="text-center my-2 text-gray-600">{date}</div>
             <div className="flex flex-col gap-2">
               {messagesForDate.map((message) => (
                 <Message
-                  key={message.sender_id}
+                  // key={message.sender_id}
+                  sender={message.sender_name}
+                  message={message.content}
+                  self={message.sender_id === user.user_id}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+        {Object.entries(groupedNewMessages).map(([date, messagesForDate]) => (
+          <div key={date}>
+            <div className="text-center my-2 text-gray-600">{date}</div>
+            <div className="flex flex-col gap-2">
+              {messagesForDate.map((message) => (
+                <Message
+                  // key={message.sender_id}
                   sender={message.sender_name}
                   message={message.content}
                   self={message.sender_id === user.user_id}
