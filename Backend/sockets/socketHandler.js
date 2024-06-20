@@ -4,7 +4,8 @@ const { StatusCodes } = require("http-status-codes");
 const { validateToken } = require("../helpers/jwtHelper");
 const { UserSocketMap, userAlreadyConnected, disconnectSocketById, getUserSocket } = require("./socketUtils");
 const { NEW_MESSAGE, NEW_ATTACHMENT } = require("./socketEvents");
-const { getOtherMemeber } = require("../utils/chatUtils")
+const { getOtherMemeber } = require("../utils/chatUtils");
+const { sendMessageToKafka, consumeMessage } = require("../kafka/kafkaHandler");
 
 const socketHandler = (server) => {
     const io = new Server(server, {
@@ -36,26 +37,32 @@ const socketHandler = (server) => {
             UserSocketMap.set(socket.user.id, socket.id)
             console.log(`${socket.user.name} is reconnected, ${socket.id}`);
         }
+        consumeMessage(NEW_MESSAGE);
 
-        socket.on(NEW_MESSAGE, (message) => {
+        socket.on(NEW_MESSAGE, async (message) => {
             console.log(message);
             const otherMemebers = getOtherMemeber(message.members, socket.user.id)
-            console.log(otherMemebers);
             const socketOtherMembers = getUserSocket(otherMemebers)
-            console.log(socketOtherMembers, UserSocketMap);
-            socketOtherMembers.forEach(socketId => {
+            for (const socketId of socketOtherMembers) {
                 if (io.sockets.sockets.get(socketId)) {
                     console.log(`Emitting message to socket ID: ${socketId}`);
-                    io.to(socketId).emit(NEW_MESSAGE, {
+                    const newMessage = {
                         sender_id: socket.user.id,
                         content: message.content,
                         sender_name: message.sender_name,
-                        createdAt: message.createdAt
-                    });
+                        createdAt: message.createdAt,
+                        chatId: message.chatId
+                    };
+                    io.to(socketId).emit(NEW_MESSAGE, newMessage);
+                    try {
+                        await sendMessageToKafka(NEW_MESSAGE, newMessage);
+                    } catch (error) {
+                        console.error(`Error sending message to Kafka for socket ID ${socketId}:`, error);
+                    }
                 } else {
                     console.log(`Socket ID ${socketId} is not connected.`);
                 }
-            });
+            }
         })
 
         socket.on('disconnect', () => {
