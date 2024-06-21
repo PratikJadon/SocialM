@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import testAvatar from "../assets/testAvatar.png";
 import { PiDotsThreeVertical as VerticalDotsIcon } from "react-icons/pi";
@@ -7,20 +7,27 @@ import Message from "./Message";
 import { groupMessagesByDate } from "../utils/groupMessagesByDate";
 import SendBar from "../shared/SendBar";
 import { getChatById, getChatMessagae, sendMessage } from "../utils/apiHandler";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { NEW_MESSAGE } from "../utils/socketEvents";
+import { clearMessageAlert, setCurrentChatId } from "../redux/Slices/chatSlice";
 
-const ChatBox = ({ data }) => {
+const ChatBox = () => {
   const { chatId } = useParams();
   const [chatDetails, setChatDetails] = useState("");
   const [messages, setMessages] = useState([]);
   const [newMessages, setNewMessages] = useState([]);
   const user = useSelector((state) => state.auth.user);
   const socket = useSelector((state) => state.socket.socket);
+  const messageAlert = useSelector((state) => state.chat.messageAlert);
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(setCurrentChatId({ chatId: chatId }));
+    dispatch(clearMessageAlert({ chatId: chatId }));
+
     if (socket) {
       socket.on(NEW_MESSAGE, (message) => {
+        if (message.chatId !== chatId) return;
         setNewMessages((prevMessage) => [...prevMessage, message]);
       });
     }
@@ -28,7 +35,6 @@ const ChatBox = ({ data }) => {
     (async () => {
       const data = await getChatById({ chatId: chatId });
       setChatDetails(data.chatDetail);
-
       const messages = await getChatMessagae({ page: 1, chatId: chatId });
       setMessages(messages.messages);
     })();
@@ -37,8 +43,11 @@ const ChatBox = ({ data }) => {
       if (socket) {
         socket.off(NEW_MESSAGE);
       }
+      dispatch(setCurrentChatId({ chatId: null }));
+      setMessages([]);
+      setNewMessages([]);
     };
-  }, [socket]);
+  }, [socket, chatId, dispatch]);
 
   const handleSubmit = async (e, value) => {
     e.preventDefault();
@@ -121,4 +130,4 @@ const ChatBox = ({ data }) => {
   );
 };
 
-export default ChatBox;
+export default memo(ChatBox);

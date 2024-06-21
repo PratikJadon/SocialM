@@ -1,8 +1,8 @@
-import React from "react";
+import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import Badge from "../shared/Badge";
 
-const ChatListItem = ({ data }) => {
+const ChatListItem = ({ data, unreadMessage }) => {
   return (
     <Link to={`${data._id}`}>
       <div className="w-full flex gap-5 items-center hover:bg-lightBlack p-2 rounded-2xl cursor-pointer">
@@ -12,11 +12,13 @@ const ChatListItem = ({ data }) => {
         />
         <div>
           <p>{data.name}</p>
-          <p className="text-gray-400 text-sm">{data.lastMessage}</p>
+          {unreadMessage && (
+            <p className="text-gray-400 text-sm">{unreadMessage.lastMessage}</p>
+          )}
         </div>
-        {data.unreadMessage && (
+        {unreadMessage && (
           <div className="ml-auto">
-            <Badge count={data.undreadMessageCount} />
+            <Badge count={unreadMessage.unreadMessageCount} />
           </div>
         )}
       </div>
@@ -24,4 +26,4 @@ const ChatListItem = ({ data }) => {
   );
 };
 
-export default ChatListItem;
+export default memo(ChatListItem);
