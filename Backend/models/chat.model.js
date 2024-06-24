@@ -14,7 +14,21 @@ const chatSchema = new mongoose.Schema({
     }],
     profileImage: {
         type: String
-    }
+    },
+    lastMessage: {
+        type: String
+    },
+    unreadMessageCount: [{
+        _id: false,
+        membersId: {
+            type: mongoose.Schema.ObjectId,
+            ref: "user"
+        },
+        count: {
+            type: Number,
+            default: 0
+        }
+    }]
 }, { timestamps: true });
 
 

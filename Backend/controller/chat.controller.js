@@ -46,6 +46,8 @@ exports.getAllChats = async (req, res, next) => {
             name: chat.groupChat ? chat.name : otherMember[0].name,
             profileImage: chat.groupChat ? chat.profileImage : otherMember[0].avatar,
             groupChat: chat.groupChat,
+            lastMessage: chat.lastMessage,
+            unreadMessageCount: chat.unreadMessageCount
         };
     })
     return res.status(StatusCodes.OK).json({ message: "Chat fetched successfully", chats: tranformedChat })

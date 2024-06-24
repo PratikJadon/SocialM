@@ -8,8 +8,12 @@ import { groupMessagesByDate } from "../utils/groupMessagesByDate";
 import SendBar from "../shared/SendBar";
 import { getChatById, getChatMessagae, sendMessage } from "../utils/apiHandler";
 import { useDispatch, useSelector } from "react-redux";
-import { NEW_MESSAGE } from "../utils/socketEvents";
-import { clearMessageAlert, setCurrentChatId } from "../redux/Slices/chatSlice";
+import { NEW_MESSAGE, NEW_MESSAGE_ALERT } from "../utils/socketEvents";
+import {
+  clearMessageAlert,
+  setChatLastMessage,
+  setCurrentChatId,
+} from "../redux/Slices/chatSlice";
 
 const ChatBox = () => {
   const { chatId } = useParams();
@@ -18,11 +22,26 @@ const ChatBox = () => {
   const [newMessages, setNewMessages] = useState([]);
   const user = useSelector((state) => state.auth.user);
   const socket = useSelector((state) => state.socket.socket);
-  const messageAlert = useSelector((state) => state.chat.messageAlert);
+  const newMessageAlert = useSelector((state) => state.chat.messageAlert);
   const dispatch = useDispatch();
 
   useEffect(() => {
+    (async () => {
+      const data = await getChatById({ chatId: chatId });
+      setChatDetails(data.chatDetail);
+      const messages = await getChatMessagae({ page: 1, chatId: chatId });
+      setMessages(messages.messages);
+    })();
+  }, [chatId]);
+
+  useEffect(() => {
     dispatch(setCurrentChatId({ chatId: chatId }));
+    const checkifAlertExists = newMessageAlert.find(
+      (alert) => alert.chatId === chatId
+    );
+    if (checkifAlertExists) {
+      socket.emit(NEW_MESSAGE_ALERT, { currentChatId: chatId, clear: true });
+    }
     dispatch(clearMessageAlert({ chatId: chatId }));
 
     if (socket) {
@@ -31,13 +50,6 @@ const ChatBox = () => {
         setNewMessages((prevMessage) => [...prevMessage, message]);
       });
     }
-
-    (async () => {
-      const data = await getChatById({ chatId: chatId });
-      setChatDetails(data.chatDetail);
-      const messages = await getChatMessagae({ page: 1, chatId: chatId });
-      setMessages(messages.messages);
-    })();
 
     return () => {
       if (socket) {
@@ -62,6 +74,9 @@ const ChatBox = () => {
     if (socket) {
       setNewMessages((prev) => [...prev, chatMessage]);
       socket.emit(NEW_MESSAGE, chatMessage);
+      // dispatch(
+      //   setChatLastMessage({ chatId, lastMessage: chatMessage.content })
+      // );
     }
     // await sendMessage(chatMessage);
   };

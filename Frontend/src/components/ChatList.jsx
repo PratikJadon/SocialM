@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SearchBar from "../shared/SearchBar";
 import { getAllChats } from "../utils/apiHandler";
@@ -12,19 +12,43 @@ const ChatList = () => {
   const dispatch = useDispatch();
   const newMessageAlert = useSelector((state) => state.chat.messageAlert);
   const currentChatId = useSelector((state) => state.chat.currentChatId);
+  const user = useSelector((state) => state.auth.user);
+  console.log(newMessageAlert);
+  useEffect(() => {
+    (async () => {
+      const data = await getAllChats();
+      setChatList(data);
+      if (data) {
+        data.forEach((chat) => {
+          chat.unreadMessageCount.forEach((unreadMessage) => {
+            if (unreadMessage.membersId === user.user_id) {
+              dispatch(
+                setMessageAlert({
+                  chatId: chat._id,
+                  lastMessage: chat.lastMessage,
+                  count: unreadMessage.count,
+                })
+              );
+            }
+          });
+        });
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     if (socket) {
       socket.on(NEW_MESSAGE_ALERT, (messageAlert) => {
         if (currentChatId !== messageAlert.chatId) {
           dispatch(setMessageAlert(messageAlert));
+          socket.emit(NEW_MESSAGE_ALERT, {
+            currentChatId,
+            messageAlert,
+            clear: false,
+          });
         }
       });
     }
-
-    (async () => {
-      const data = await getAllChats();
-      setChatList(data);
-    })();
 
     return () => {
       if (socket) {
@@ -43,11 +67,13 @@ const ChatList = () => {
             const alert = newMessageAlert.find(
               (alert) => alert.chatId === chat._id
             );
+            console.log(newMessageAlert);
             if (alert) {
               unreadMessage = {};
               unreadMessage["lastMessage"] = alert.lastMessage;
               unreadMessage["unreadMessageCount"] = alert.count;
             }
+
             return (
               <ChatListItem
                 data={chat}
