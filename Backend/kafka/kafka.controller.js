@@ -58,19 +58,17 @@ const consumeNewMessage = async (msg) => {
 
 const consumeMessageAlert = async (msg) => {
     try {
-        console.log(msg);
         const chat = await Chat.findById(msg.chatId || msg.currentChatId);
-        let updatedUnreadMessageCount;
+        let updatedUnreadMessageCount = [];
         if (msg.clear) {
             updatedUnreadMessageCount = chat.unreadMessageCount.filter(msgCount => !msgCount.membersId.equals(msg.userId))
         } else {
-            updatedUnreadMessageCount = chat.unreadMessageCount.map(msgCount => {
-                if (msgCount.membersId.equals(msg.userId)) {
-                    msgCount.count += 1;
-                }
-                return msgCount;
-            });
-            if (!updatedUnreadMessageCount || updatedUnreadMessageCount.length <= 0) {
+            const indexForUnreadMessageCount = chat.unreadMessageCount.findIndex(msgCount => msgCount.membersId.equals(msg.userId))
+            if (indexForUnreadMessageCount != -1) {
+                updatedUnreadMessageCount = chat.unreadMessageCount;
+                updatedUnreadMessageCount[indexForUnreadMessageCount].count += 1;
+            }
+            if (updatedUnreadMessageCount.length <= 0) {
                 updatedUnreadMessageCount.push({
                     membersId: msg.userId,
                     count: 1

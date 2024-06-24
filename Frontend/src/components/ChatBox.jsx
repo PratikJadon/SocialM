@@ -41,8 +41,8 @@ const ChatBox = () => {
     );
     if (checkifAlertExists) {
       socket.emit(NEW_MESSAGE_ALERT, { currentChatId: chatId, clear: true });
+      dispatch(clearMessageAlert({ chatId: chatId }));
     }
-    dispatch(clearMessageAlert({ chatId: chatId }));
 
     if (socket) {
       socket.on(NEW_MESSAGE, (message) => {

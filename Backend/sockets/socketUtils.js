@@ -15,5 +15,5 @@ exports.disconnectSocketById = (io, socketId) => {
 }
 
 exports.getUserSocket = (users = []) => {
-    return users.map(user => this.UserSocketMap.get(user))
+    return users.map(user => ({ id: user, socketId: this.UserSocketMap.get(user) }))
 }

@@ -13,7 +13,7 @@ const ChatList = () => {
   const newMessageAlert = useSelector((state) => state.chat.messageAlert);
   const currentChatId = useSelector((state) => state.chat.currentChatId);
   const user = useSelector((state) => state.auth.user);
-  console.log(newMessageAlert);
+
   useEffect(() => {
     (async () => {
       const data = await getAllChats();
@@ -67,7 +67,6 @@ const ChatList = () => {
             const alert = newMessageAlert.find(
               (alert) => alert.chatId === chat._id
             );
-            console.log(newMessageAlert);
             if (alert) {
               unreadMessage = {};
               unreadMessage["lastMessage"] = alert.lastMessage;

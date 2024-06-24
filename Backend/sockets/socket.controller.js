@@ -5,10 +5,9 @@ const { sendMessageToKafka } = require("../kafka/kafkaHandler");
 
 const handleNewMessage = (io, socket) => {
     return async (message) => {
-        console.log(message);
         const otherMemebers = getOtherMemeber(message.members, socket.user.id)
         const socketOtherMembers = getUserSocket(otherMemebers)
-        for (const socketId of socketOtherMembers) {
+        for (const { socketId, id } of socketOtherMembers) {
             const newMessage = {
                 sender_id: socket.user.id,
                 content: message.content,
@@ -25,6 +24,7 @@ const handleNewMessage = (io, socket) => {
                 io.to(socketId).emit(NEW_MESSAGE, newMessage);
                 io.to(socketId).emit(NEW_MESSAGE_ALERT, newMessageAlert)
             } else {
+                await sendMessageToKafka(NEW_MESSAGE_ALERT, { clear: false, chatId: message.chatId, userId: id })
                 console.log(`Socket ID ${socketId} is not connected.`);
             }
             try {
@@ -39,11 +39,11 @@ const handleNewMessage = (io, socket) => {
 const handleNewMessageAlert = (io, socket) => {
     return async ({ currentChatId, messageAlert, clear }) => {
         if (clear) {
-            return sendMessageToKafka(NEW_MESSAGE_ALERT, { clear, currentChatId, userId: socket.user.id })
+            return await sendMessageToKafka(NEW_MESSAGE_ALERT, { clear, currentChatId, userId: socket.user.id })
         }
         if (currentChatId !== messageAlert.chatId) {
             messageAlert = { ...messageAlert, userId: socket.user.id, clear }
-            sendMessageToKafka(NEW_MESSAGE_ALERT, messageAlert)
+            await sendMessageToKafka(NEW_MESSAGE_ALERT, messageAlert)
         }
     }
 }
