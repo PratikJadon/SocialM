@@ -2,16 +2,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SearchBar from "../shared/SearchBar";
 import { getAllChats } from "../utils/apiHandler";
-import { NEW_MESSAGE_ALERT } from "../utils/socketEvents";
 import ChatListItem from "./ChatListItem";
-import { setChatLastMessage, setMessageAlert } from "../redux/Slices/chatSlice";
+import { setMessageAlert } from "../redux/Slices/chatSlice";
 
 const ChatList = () => {
   const [chatList, setChatList] = useState([]);
-  const socket = useSelector((state) => state.socket.socket);
   const dispatch = useDispatch();
   const newMessageAlert = useSelector((state) => state.chat.messageAlert);
-  const currentChatId = useSelector((state) => state.chat.currentChatId);
   const user = useSelector((state) => state.auth.user);
   const chatLastMessage = useSelector((state) => state.chat.chatLastMessage);
 
@@ -28,6 +25,7 @@ const ChatList = () => {
                   chatId: chat._id,
                   lastMessage: chat.lastMessage,
                   count: unreadMessage.count,
+                  db: true,
                 })
               );
             }
@@ -36,34 +34,6 @@ const ChatList = () => {
       }
     })();
   }, []);
-
-  useEffect(() => {
-    if (socket) {
-      socket.on(NEW_MESSAGE_ALERT, (messageAlert) => {
-        if (currentChatId !== messageAlert.chatId) {
-          dispatch(setMessageAlert(messageAlert));
-          socket.emit(NEW_MESSAGE_ALERT, {
-            currentChatId,
-            messageAlert,
-            clear: false,
-          });
-        } else {
-          dispatch(
-            setChatLastMessage({
-              chatId: currentChatId,
-              lastMessage: messageAlert.lastMessage,
-            })
-          );
-        }
-      });
-    }
-
-    return () => {
-      if (socket) {
-        socket.off(NEW_MESSAGE_ALERT);
-      }
-    };
-  }, [socket, dispatch, currentChatId]);
 
   return (
     <div className="bg-baseBlack my-2 p-3 py-4 rounded-md w-[27%] border-r-[1px] border-opacity-10 border-white">

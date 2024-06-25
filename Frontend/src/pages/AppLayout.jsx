@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { CiChat1 as InboxIcon } from "react-icons/ci";
 import { GoHome as HomeIcon } from "react-icons/go";
 import { IoIosLogIn as LoginIcon } from "react-icons/io";
@@ -6,11 +6,45 @@ import {
   IoPersonOutline as PersonIcon,
   IoSettingsOutline as SettingIcon,
 } from "react-icons/io5";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, Outlet } from "react-router-dom";
+import { NEW_MESSAGE_ALERT } from "../utils/socketEvents";
+import { setChatLastMessage, setMessageAlert } from "../redux/Slices/chatSlice";
 
 const AppLayout = () => {
   const name = useSelector((state) => state.auth.user.name);
+  const currentChatId = useSelector((state) => state.chat.currentChatId);
+  const socket = useSelector((state) => state.socket.socket);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (socket) {
+      socket.on(NEW_MESSAGE_ALERT, (messageAlert) => {
+        if (currentChatId !== messageAlert.chatId) {
+          messageAlert = { ...messageAlert, db: false };
+          dispatch(setMessageAlert(messageAlert));
+          socket.emit(NEW_MESSAGE_ALERT, {
+            currentChatId,
+            messageAlert,
+            clear: false,
+          });
+        } else {
+          dispatch(
+            setChatLastMessage({
+              chatId: currentChatId,
+              lastMessage: messageAlert.lastMessage,
+            })
+          );
+        }
+      });
+    }
+
+    return () => {
+      if (socket) {
+        socket.off(NEW_MESSAGE_ALERT);
+      }
+    };
+  }, [socket, dispatch, currentChatId]);
 
   return (
     <div className="flex h-full gap-2">
