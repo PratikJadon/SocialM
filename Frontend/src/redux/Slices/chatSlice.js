@@ -10,7 +10,7 @@ const chatSlice = createSlice({
     reducers: {
         setChatLastMessage: (state, action) => {
             let chatToUpdateIndex = state.chatLastMessage.findIndex(chat => chat.chatId === action.payload.chatId)
-            if (chatToUpdateIndex) {
+            if (chatToUpdateIndex !== -1) {
                 state.chatLastMessage[chatToUpdateIndex].lastMessage = action.payload.lastMessage
             } else {
                 state.chatLastMessage.push({
@@ -39,7 +39,17 @@ const chatSlice = createSlice({
         clearMessageAlert: (state, action) => {
             let index = state.messageAlert.findIndex(alert => alert.chatId === action.payload.chatId)
             if (index !== -1) {
+                const alert = state.messageAlert[index]
                 state.messageAlert.splice(index, 1);
+                let chatToUpdateIndex = state.chatLastMessage.findIndex(chat => chat.chatId === action.payload.chatId)
+                if (chatToUpdateIndex !== -1) {
+                    state.chatLastMessage[chatToUpdateIndex].lastMessage = alert.lastMessage
+                } else {
+                    state.chatLastMessage.push({
+                        chatId: action.payload.chatId,
+                        lastMessage: alert.lastMessage
+                    })
+                }
             }
         }
     },

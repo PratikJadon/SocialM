@@ -74,9 +74,9 @@ const ChatBox = () => {
     if (socket) {
       setNewMessages((prev) => [...prev, chatMessage]);
       socket.emit(NEW_MESSAGE, chatMessage);
-      // dispatch(
-      //   setChatLastMessage({ chatId, lastMessage: chatMessage.content })
-      // );
+      dispatch(
+        setChatLastMessage({ chatId, lastMessage: chatMessage.content })
+      );
     }
     // await sendMessage(chatMessage);
   };

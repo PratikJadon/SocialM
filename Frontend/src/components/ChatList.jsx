@@ -4,7 +4,7 @@ import SearchBar from "../shared/SearchBar";
 import { getAllChats } from "../utils/apiHandler";
 import { NEW_MESSAGE_ALERT } from "../utils/socketEvents";
 import ChatListItem from "./ChatListItem";
-import { setMessageAlert } from "../redux/Slices/chatSlice";
+import { setChatLastMessage, setMessageAlert } from "../redux/Slices/chatSlice";
 
 const ChatList = () => {
   const [chatList, setChatList] = useState([]);
@@ -13,6 +13,7 @@ const ChatList = () => {
   const newMessageAlert = useSelector((state) => state.chat.messageAlert);
   const currentChatId = useSelector((state) => state.chat.currentChatId);
   const user = useSelector((state) => state.auth.user);
+  const chatLastMessage = useSelector((state) => state.chat.chatLastMessage);
 
   useEffect(() => {
     (async () => {
@@ -46,6 +47,13 @@ const ChatList = () => {
             messageAlert,
             clear: false,
           });
+        } else {
+          dispatch(
+            setChatLastMessage({
+              chatId: currentChatId,
+              lastMessage: messageAlert.lastMessage,
+            })
+          );
         }
       });
     }
@@ -63,14 +71,22 @@ const ChatList = () => {
       <div className="mt-5 flex flex-col gap-5">
         {chatList &&
           chatList?.map((chat) => {
-            let unreadMessage = null;
+            let unreadMessage = {
+              lastMessage: chat.lastMessage,
+            };
             const alert = newMessageAlert.find(
               (alert) => alert.chatId === chat._id
             );
             if (alert) {
-              unreadMessage = {};
               unreadMessage["lastMessage"] = alert.lastMessage;
               unreadMessage["unreadMessageCount"] = alert.count;
+            } else {
+              const currChatLastMessage = chatLastMessage.find(
+                (message) => message.chatId === chat._id
+              );
+              if (currChatLastMessage) {
+                unreadMessage.lastMessage = currChatLastMessage.lastMessage;
+              }
             }
 
             return (

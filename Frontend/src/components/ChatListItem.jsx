@@ -12,11 +12,9 @@ const ChatListItem = ({ data, unreadMessage }) => {
         />
         <div>
           <p>{data.name}</p>
-          {unreadMessage && (
-            <p className="text-gray-400 text-sm">{unreadMessage.lastMessage}</p>
-          )}
+          <p className="text-gray-400 text-sm">{unreadMessage.lastMessage}</p>
         </div>
-        {unreadMessage && (
+        {unreadMessage.unreadMessageCount && (
           <div className="ml-auto">
             <Badge count={unreadMessage.unreadMessageCount} />
           </div>
