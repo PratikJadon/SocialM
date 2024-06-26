@@ -2,16 +2,68 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { loginSuccess } from "../redux/Slices/authSlice";
-import { login } from "../utils/apiHandler";
+import { login, signup } from "../utils/apiHandler";
 import useFetch from "../hooks/useFetch";
+import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import GlowInput from "../shared/GlowInput";
+import { signupForm } from "../form/login";
+import ImageUpload from "../shared/ImageUpload";
 
 const Login = () => {
   const navigateTo = useNavigate();
   const dispatch = useDispatch();
   const fetchWrapper = useFetch();
   const user = useSelector((state) => state.auth.user);
+  const [selectedTab, setSelectedTab] = useState("login");
 
-  const handleSubmit = async (e) => {
+  const [userData, setUserData] = useState({
+    username: "",
+    password: "",
+    name: "",
+    email: "",
+    avatar: "",
+  });
+
+  const tabs = [
+    {
+      viewValue: "Login",
+      id: "login",
+    },
+    {
+      viewValue: "Signup",
+      id: "signup",
+    },
+  ];
+
+  const changeTab = (id) => {
+    setSelectedTab(id);
+    setUserData({
+      username: "",
+      password: "",
+      name: "",
+      email: "",
+      avatar: "",
+    });
+  };
+
+  const tabVariant = {
+    active: {
+      width: "55%",
+      transition: {
+        type: "spring",
+        duration: 0.4,
+      },
+    },
+    inactive: {
+      width: "15%",
+      transition: {
+        type: "tween",
+        duration: 0.4,
+      },
+    },
+  };
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     const { data, response } = await fetchWrapper(login, userData);
     if (response.ok) {
@@ -21,44 +73,114 @@ const Login = () => {
     }
   };
 
-  const [userData, setUserData] = useState({
-    username: "",
-    password: "",
-  });
-
   const handleChange = (e) => {
+    if (e.target.name === "avatar") {
+      setUserData({ ...userData, [e.target.name]: e.target.files[0] });
+      return;
+    }
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
+  const handleSignupSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    Object.entries(userData).forEach(([key, value]) => {
+      if (key === "avatar") key = "image";
+      formData.append(key, value);
+    });
+
+    const { data, response } = await fetchWrapper(signup, formData);
+  };
+
   return (
-    <div className="h-full w-full flex justify-center items-center">
-      <div className="w-1/3 bg-lightBlack p-2 rounded-lg">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col gap-2 text-black"
-        >
-          <input
-            className="rounded-lg outline-none p-1"
-            name="username"
-            placeholder="Username"
-            value={userData.username}
-            onChange={(e) => handleChange(e)}
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            className="rounded-lg outline-none p-1"
-            value={userData.password}
-            onChange={(e) => handleChange(e)}
-          />
-          <button
-            type="submit"
-            className="text-white rounded-xl hover:bg-hoverBlue p-1"
-          >
-            Login
-          </button>
-        </form>
+    <div className="w-full h-full flex flex-col">
+      <div className="w-full flex justify-end p-4">
+        <button className="font-bold hover:bg-hoverBlue border-2 p-1 px-2 rounded-2xl transition-all duration-300 hover:border-black">
+          Sign Up
+        </button>
+      </div>
+      <div className="h-full flex justify-center items-center">
+        <div className="h-fit w-2/5 flex flex-col items-center gap-11 rounded-xl p-4">
+          <div className="w-3/4">
+            <ul className="w-full list-none text-lg flex gap-14 justify-center">
+              {tabs.map((tab) => (
+                <motion.li
+                  key={tab.id}
+                  variants={tabVariant}
+                  animate={selectedTab === tab.id ? "active" : "inactive"}
+                  onClick={() => changeTab(tab.id)}
+                  className={`rounded-lg p-1 cursor-pointer ${
+                    tab.id === selectedTab
+                      ? "bg-white text-black"
+                      : "bg-black text-white"
+                  }`}
+                >
+                  {tab.viewValue}
+                </motion.li>
+              ))}
+            </ul>
+          </div>
+          <div className="w-full flex justify-center">
+            <form
+              onSubmit={
+                selectedTab === "login" ? handleLoginSubmit : handleSignupSubmit
+              }
+              className="flex flex-col items-center w-3/4 gap-4 text-white"
+            >
+              {selectedTab === "login" && (
+                <>
+                  <GlowInput
+                    inputName={"username"}
+                    inputPlaceholder={"Username"}
+                    inputValue={userData.username}
+                    inputOnChange={handleChange}
+                  />
+                  <GlowInput
+                    inputName={"password"}
+                    inputValue={userData.password}
+                    inputPlaceholder={"Password"}
+                    inputOnChange={handleChange}
+                    inputType={"password"}
+                  />
+                  <button
+                    type="submit"
+                    className="text-white rounded-xl hover:bg-hoverBlue p-2 w-4/5 font-bold  transition-all duration-300"
+                  >
+                    Login
+                  </button>
+                </>
+              )}
+              {selectedTab !== "login" && (
+                <>
+                  {signupForm.map((ele) =>
+                    ele.type !== "file" ? (
+                      <GlowInput
+                        key={ele.id}
+                        inputName={ele.name}
+                        inputType={ele.type}
+                        inputPlaceholder={ele.placeholder}
+                        inputValue={userData[`${ele.name}`]}
+                        inputOnChange={handleChange}
+                      />
+                    ) : (
+                      <ImageUpload
+                        key={ele.id}
+                        onUpload={handleChange}
+                        fileValue={userData.avatar}
+                      />
+                    )
+                  )}
+                  <button
+                    type="submit"
+                    className="text-white rounded-xl hover:bg-hoverBlue p-2 w-4/5 font-bold  transition-all duration-300"
+                  >
+                    SignUp
+                  </button>
+                </>
+              )}
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );

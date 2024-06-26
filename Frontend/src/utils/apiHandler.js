@@ -18,6 +18,25 @@ export const getAllChats = async () => {
     }
 };
 
+export const signup = async (formData) => {
+    const baseURL = import.meta.env.VITE_BASE_URL;
+    try {
+        const response = await fetch(`${baseURL}/user/signup`, {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            console.log(data.message);
+        }
+        if (response.ok) sessionStorage.setItem("token", data.user.token);
+        return { data, response };
+    } catch (error) {
+        console.log(error.message);
+    }
+}
+
 export const login = async (userData) => {
     const baseURL = import.meta.env.VITE_BASE_URL;
     try {
