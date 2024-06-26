@@ -40,7 +40,9 @@ const ChatBox = () => {
       (alert) => alert.chatId === chatId
     );
     if (checkifAlertExists) {
-      socket.emit(NEW_MESSAGE_ALERT, { currentChatId: chatId, clear: true });
+      if (socket) {
+        socket.emit(NEW_MESSAGE_ALERT, { currentChatId: chatId, clear: true });
+      }
       dispatch(clearMessageAlert({ chatId: chatId }));
     }
 
