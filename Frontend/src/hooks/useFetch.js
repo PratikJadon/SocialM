@@ -14,7 +14,7 @@ const useFetch = () => {
         if (user) updateParams = [...params, user.token]
 
         const { data, response } = await apiCall(...updateParams)
-        if (!response.ok) {
+        if (response && !response.ok) {
             if (response.status === 401) {
                 dispatch(logout())
                 navigateTo("/login")

@@ -74,11 +74,11 @@ export const getChatById = async (chatId) => {
             body: JSON.stringify(chatId)
         });
 
-        const data = await response.json();
         if (!response.ok) {
-            console.log(data.message);
+            return { data: {}, response }
         }
-        return data;
+        const data = await response.json()
+        return { data, response };
     } catch (error) {
         console.log(error.message);
     }
@@ -99,7 +99,7 @@ export const getChatMessagae = async (chatDetails) => {
         });
 
         const data = await response.json();
-        return data;
+        return { data, response };
     } catch (error) {
         console.log(error.message);
     }

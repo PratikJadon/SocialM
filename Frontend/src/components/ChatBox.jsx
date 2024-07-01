@@ -1,4 +1,11 @@
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useParams } from "react-router-dom";
 import testAvatar from "../assets/testAvatar.png";
 import { PiDotsThreeVertical as VerticalDotsIcon } from "react-icons/pi";
@@ -14,6 +21,7 @@ import {
   setChatLastMessage,
   setCurrentChatId,
 } from "../redux/Slices/chatSlice";
+import useFetch from "../hooks/useFetch";
 
 const ChatBox = () => {
   const { chatId } = useParams();
@@ -23,16 +31,59 @@ const ChatBox = () => {
   const user = useSelector((state) => state.auth.user);
   const socket = useSelector((state) => state.socket.socket);
   const newMessageAlert = useSelector((state) => state.chat.messageAlert);
+  const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const dispatch = useDispatch();
+  const [page, setPage] = useState(1);
+  const [pageMax, setPageMax] = useState(1);
+  const fetchWrapper = useFetch();
+  const autoScroll = useRef(true);
+
+  const handleScroll = () => {
+    if (chatContainerRef.current.scrollTop === 0) {
+      if (page < pageMax) setPage((prev) => prev + 1);
+      autoScroll.current = false;
+    }
+    const isBottom =
+      chatContainerRef.current.scrollHeight -
+        chatContainerRef.current.scrollTop ===
+      chatContainerRef.current.clientHeight;
+
+    if (isBottom) {
+      autoScroll.current = true;
+    }
+  };
 
   useEffect(() => {
     (async () => {
-      const data = await getChatById({ chatId: chatId });
-      setChatDetails(data.chatDetail);
-      const messages = await getChatMessagae({ page: 1, chatId: chatId });
-      setMessages(messages.messages);
+      let { response: chatResponse, data: chatData } = await fetchWrapper(
+        getChatById,
+        {
+          chatId: chatId,
+        }
+      );
+      if (chatResponse.ok) setChatDetails(chatData.chatDetail);
+
+      let { response: chatMessageResponse, data: chatMessageData } =
+        await fetchWrapper(getChatMessagae, {
+          page: page,
+          chatId: chatId,
+        });
+      if (chatMessageResponse.ok) {
+        if (chatMessageData.hasMoreMessages) setPageMax((prev) => prev + 1);
+        setMessages((prevMessage) => [
+          ...chatMessageData.messages,
+          ...prevMessage,
+        ]);
+      }
     })();
-  }, [chatId]);
+  }, [chatId, page]);
+
+  useEffect(() => {
+    if (messagesEndRef.current && autoScroll.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [newMessages, messages]);
 
   useEffect(() => {
     dispatch(setCurrentChatId({ chatId: chatId }));
@@ -107,7 +158,11 @@ const ChatBox = () => {
       </div>
 
       {/* Message Area */}
-      <div className="p-4 overflow-y-auto">
+      <div
+        className="p-4 overflow-y-auto"
+        onScroll={handleScroll}
+        ref={chatContainerRef}
+      >
         {Object.entries(groupedOldMessages).map(([date, messagesForDate]) => (
           <div key={date}>
             <div className="text-center my-2 text-gray-600">{date}</div>
@@ -138,6 +193,7 @@ const ChatBox = () => {
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef}></div>
       </div>
 
       <div className="p-4 mt-auto">

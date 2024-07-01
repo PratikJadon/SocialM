@@ -64,9 +64,12 @@ exports.getchatMessages = async (req, res, next) => {
         const messages = await Message.find({ chat_id: chatId }).select("sender_id sender_name attachments content createdAt")
             .sort({ createdAt: -1 })  // Sort by createdAt descending (latest first)
             .skip(skip)               // Skip (page - 1) * limit messages for pagination
-            .limit(10);               // Limit to 10 messages per page
+            .limit(limit + 1);               // Limit to 10 messages per page
 
-        res.status(200).json({ message: "Successfull", messages });
+        const hasMoreMessages = messages.length > limit;
+        if (hasMoreMessages) messages.pop()
+
+        res.status(200).json({ message: "Successfull", messages, hasMoreMessages });
     } catch (error) {
         console.error('Error fetching chat messages:', error);
         res.status(500).json({ message: 'Internal server error' });

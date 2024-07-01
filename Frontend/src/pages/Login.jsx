@@ -94,11 +94,6 @@ const Login = () => {
 
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="w-full flex justify-end p-4">
-        <button className="font-bold hover:bg-hoverBlue border-2 p-1 px-2 rounded-2xl transition-all duration-300 hover:border-black">
-          Sign Up
-        </button>
-      </div>
       <div className="h-full flex justify-center items-center">
         <div className="h-fit w-2/5 flex flex-col items-center gap-11 rounded-xl p-4">
           <div className="w-3/4">
