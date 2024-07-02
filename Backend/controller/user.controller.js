@@ -82,29 +82,36 @@ exports.login = async (req, res, next) => {
 }
 
 exports.searchUser = async (req, res, next) => {
-    const { username } = req.body;
+    try {
+        const { username } = req.body;
+        if (!username) return next(customError(StatusCodes.BAD_REQUEST, "Please give user to search"))
 
-    if (!username) return next(customError(StatusCodes.BAD_REQUEST, "Please give user to search"))
-
-    const regex = new RegExp(username, 'i'); // 'i' makes it case-insensitive
-    const foundUser = await User.find({ username: { $regex: regex, $ne: req.user.username } }).select("name avatar _id");
-
-    res.status(StatusCodes.OK).json({ message: "Success", foundUser })
+        const regex = new RegExp(username, 'i'); // 'i' makes it case-insensitive
+        let foundUser = await User.find({ username: { $regex: regex, $ne: req.user.username } }).select("name avatar _id");
+        foundUser = foundUser.filter(user => user._id !== req.user.id)
+        res.status(StatusCodes.OK).json({ message: "Success", foundUser })
+    } catch (error) {
+        next(error)
+    }
 }
 
 exports.reAuth = async (req, res, next) => {
-    const { token } = req.body
-    if (!token) next(customError(StatusCodes.UNAUTHORIZED, "Please login to access."))
+    try {
+        const { token } = req.body
+        if (!token) next(customError(StatusCodes.UNAUTHORIZED, "Please login to access."))
 
-    const user = validateToken(token)
-    if (!user) next(customError(StatusCodes.UNAUTHORIZED, "Please login to access."))
-    return res.status(StatusCodes.OK).json({
-        message: "User is authenticated", user: {
-            name: user.name,
-            email: user.email,
-            username: user.username,
-            user_id: user.id,
-            token
-        }
-    })
+        const user = validateToken(token)
+        if (!user) next(customError(StatusCodes.UNAUTHORIZED, "Please login to access."))
+        return res.status(StatusCodes.OK).json({
+            message: "User is authenticated", user: {
+                name: user.name,
+                email: user.email,
+                username: user.username,
+                user_id: user.id,
+                token
+            }
+        })
+    } catch (error) {
+        next(error)
+    }
 }

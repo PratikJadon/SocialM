@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SearchBar from "../shared/SearchBar";
-import { getAllChats } from "../utils/apiHandler";
+import { getAllChats, searchUsers } from "../utils/apiHandler";
 import ChatListItem from "./ChatListItem";
 import { setMessageAlert } from "../redux/Slices/chatSlice";
+import useDebounce from "../hooks/useDebounce";
+import useFetch from "../hooks/useFetch";
+import SearchDropDown from "../shared/SearchDropDown";
 
 const ChatList = () => {
   const [chatList, setChatList] = useState([]);
@@ -11,6 +14,10 @@ const ChatList = () => {
   const newMessageAlert = useSelector((state) => state.chat.messageAlert);
   const user = useSelector((state) => state.auth.user);
   const chatLastMessage = useSelector((state) => state.chat.chatLastMessage);
+  const [searchFriend, setSearchFriend] = useState("");
+  const debounceSearchFriend = useDebounce(searchFriend);
+  const fetchWrapper = useFetch();
+  const [searchData, setSearchData] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -35,9 +42,35 @@ const ChatList = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    if (debounceSearchFriend.length === 0) {
+      setSearchData(null);
+      return;
+    }
+    (async () => {
+      const search = { username: debounceSearchFriend };
+      setSearchData(null);
+      const { data, response } = await fetchWrapper(searchUsers, search);
+      if (response.ok) {
+        setSearchData(data.foundUser);
+      }
+    })();
+  }, [debounceSearchFriend]);
+
   return (
-    <div className="bg-baseBlack my-2 p-3 py-4 rounded-md w-[27%] border-r-[1px] border-opacity-10 border-white">
-      <SearchBar placeholder={"Search Friends"} />
+    <div className="bg-baseBlack my-2 p-3 py-4 rounded-md w-[27%] border-r-[1px] border-opacity-10 border-white relative">
+      <SearchBar
+        placeholder={"Search Friends"}
+        inputValue={searchFriend}
+        inputChange={setSearchFriend}
+      />
+      {searchFriend.length > 0 && (
+        <div className="relative w-full">
+          <div className="absolute w-full bg-lightBlack rounded-lg p-4 top-2">
+            <SearchDropDown count={2} data={searchData} />
+          </div>
+        </div>
+      )}
       <div className="mt-5 flex flex-col gap-5">
         {chatList &&
           chatList?.map((chat) => {

@@ -147,3 +147,24 @@ export const reAuth = async (token) => {
         console.log(error.message);
     }
 }
+
+export const searchUsers = async (searchKey) => {
+    const baseURL = import.meta.env.VITE_BASE_URL; // Adjust to match your backend server URL
+    const token = sessionStorage.getItem("token")
+    try {
+        const response = await fetch(`${baseURL}/user/searchuser`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(searchKey)
+        });
+
+        const data = await response.json();
+        return { data, response };
+    } catch (error) {
+        console.log(error.message);
+    }
+}
