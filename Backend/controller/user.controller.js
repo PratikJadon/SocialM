@@ -87,7 +87,7 @@ exports.searchUser = async (req, res, next) => {
         if (!username) return next(customError(StatusCodes.BAD_REQUEST, "Please give user to search"))
 
         const regex = new RegExp(username, 'i'); // 'i' makes it case-insensitive
-        let foundUser = await User.find({ username: { $regex: regex, $ne: req.user.username } }).select("name avatar _id");
+        let foundUser = await User.find({ username: { $regex: regex, $ne: req.user.username } }).select("name avatar _id username");
         foundUser = foundUser.filter(user => user._id !== req.user.id)
         res.status(StatusCodes.OK).json({ message: "Success", foundUser })
     } catch (error) {

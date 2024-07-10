@@ -29,7 +29,10 @@ const DataLayout = ({ data }) => {
   return (
     <div className="flex gap-4 w-full items-center p-1 rounded-lg cursor-pointer">
       <img className="w-12 h-12 rounded-full object-cover" src={data.avatar} />
-      <div>{data.name} </div>
+      <div className="flex flex-col">
+        <div>{data.name} </div>
+        <div className="text-xs text-gray-400">{data.username}</div>
+      </div>
     </div>
   );
 };

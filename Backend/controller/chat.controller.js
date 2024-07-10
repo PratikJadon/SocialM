@@ -10,7 +10,9 @@ exports.getChat = async (req, res, next) => {
     const { chatId } = req.body;
     if (!chatId) return next(customError(StatusCodes.BAD_REQUEST, "INTERNAL SERVER ERROR!!"));
 
-    const chat = await Chat.findOne({ _id: chatId }).select("members groupChat").lean()
+    const chat = await Chat.findOne({ _id: chatId }).select("members groupChat").lean();
+    if (!chat) return next(customError(StatusCodes.BAD_REQUEST, "INTERNAL SERVER ERROR!!"));
+
     const chatMember = chat.members.filter(member => member != req.user.id);
     let chatDetail;
     if (!chat.groupChat) {
